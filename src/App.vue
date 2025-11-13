@@ -1,12 +1,16 @@
-<script setup></script>
+<script setup>
+import { filteredTodos, actions } from "@/stores/todos";
+import TodoList from "@/components/todolist/TodoList.vue";
+import AppHeader from "./components/AppHeader.vue";
+import AppFooter from "./components/appFooter.vue";
+</script>
 
 <template>
-  <h1 class="text-3xl">You did it!</h1>
-  <p>
-    Visit
-    <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to
-    read the documentation
-  </p>
+  <div class="max-w-xl mx-auto p-4">
+    <AppHeader />
+    <main class="w-full p-4 bg-slate-400 rounded-xl shadow">
+      <TodoList :todos="filteredTodos" :actions="actions" />
+    </main>
+    <AppFooter />
+  </div>
 </template>
-
-<style scoped></style>
