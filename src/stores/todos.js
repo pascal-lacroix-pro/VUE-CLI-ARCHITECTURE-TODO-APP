@@ -1,5 +1,6 @@
-// src/store/todos.js
-import { reactive, computed, watch } from "vue";
+// src/stores/todos.js
+import { ref, computed, watch } from "vue";
+import { defineStore } from "pinia";
 
 const STORAGE_KEY = "todos";
 
@@ -7,63 +8,83 @@ function load() {
   return JSON.parse(localStorage.getItem(STORAGE_KEY)) ?? [];
 }
 
-export const store = reactive({
-  todos: load(),
-  filter: "all",
+export const useTodosStore = defineStore("todos", () => {
+  // --- state ---
+  const todos = ref(load());
+  const filter = ref("all");
 
-  findOneById(id) {
-    return this.todos.find((t) => t.id === id);
-  },
+  // --- helpers ---
+  function findOneById(id) {
+    return todos.value.find((t) => t.id === id);
+  }
 
-  addOne(data) {
-    this.todos.unshift({
+  // --- getters (computed) ---
+  const filteredTodos = computed(() => {
+    if (filter.value === "active")
+      return todos.value.filter((t) => !t.completed);
+    if (filter.value === "completed")
+      return todos.value.filter((t) => t.completed);
+    return todos.value;
+  });
+
+  const notCompletedCount = computed(
+    () => todos.value.filter((t) => !t.completed).length
+  );
+
+  // --- actions ---
+  function addOne(data) {
+    todos.value.unshift({
       id: Date.now().toString(),
       content: String(data ?? "").trim(),
       completed: false,
     });
-  },
-  toggleOneById(id) {
-    const todo = this.findOneById(id);
-    if (todo) {
-      todo.completed = !todo.completed;
+  }
+
+  function toggleOneById(id) {
+    const todo = findOneById(id);
+    if (todo) todo.completed = !todo.completed;
+  }
+
+  function editOneById({ id, content }) {
+    const todo = findOneById(id);
+    if (todo) todo.content = String(content ?? "").trim();
+  }
+
+  function deleteOneById(id) {
+    const i = todos.value.findIndex((t) => t.id === id);
+    if (i !== -1) todos.value.splice(i, 1);
+  }
+
+  function clearCompleted() {
+    todos.value = todos.value.filter((t) => !t.completed);
+  }
+
+  function setFilter(value) {
+    if (["all", "active", "completed"].includes(value)) {
+      filter.value = value;
     }
-  },
-  editOneById({ id, content }) {
-    const todo = this.findOneById(id);
-    if (todo) {
-      todo.content = String(content ?? "").trim();
-    }
-  },
-  deleteOneById(id) {
-    const i = this.todos.findIndex((t) => t.id === id);
-    if (i !== -1) this.todos.splice(i, 1);
-  },
-  clearCompleted() {
-    this.todos = this.todos.filter((t) => !t.completed);
-  },
-  setFilter(data) {
-    if (["all", "active", "completed"].includes(data)) this.filter = data;
-  },
+  }
+
+  // --- persistance localStorage ---
+  watch(
+    todos,
+    (val) => localStorage.setItem(STORAGE_KEY, JSON.stringify(val)),
+    { deep: true }
+  );
+
+  return {
+    // state
+    todos,
+    filter,
+    // getters
+    filteredTodos,
+    notCompletedCount,
+    // actions
+    addOne,
+    toggleOneById,
+    editOneById,
+    deleteOneById,
+    clearCompleted,
+    setFilter,
+  };
 });
-
-const filteredTodos = computed(() => {
-  if (store.filter === "active") return store.todos.filter((t) => !t.completed);
-  if (store.filter === "completed")
-    return store.todos.filter((t) => t.completed);
-  return store.todos;
-});
-
-const notCompletedCount = computed(() => {
-  return store.todos.filter((t) => !t.completed).length;
-});
-
-export const getters = {
-  filteredTodos: filteredTodos.value,
-  notCompletedCount: notCompletedCount.value,
-};
-
-watch(
-  () => store.todos,
-  (val) => localStorage.setItem(STORAGE_KEY, JSON.stringify(val)),
-  { deep: true }
-);
