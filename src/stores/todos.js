@@ -1,16 +1,12 @@
 // src/stores/todos.js
 import { ref, computed, watch } from "vue";
 import { defineStore } from "pinia";
-
-const STORAGE_KEY = "todos";
-
-function load() {
-  return JSON.parse(localStorage.getItem(STORAGE_KEY)) ?? [];
-}
+import { todosLocalRepository } from "@/repositories/todosLocal";
 
 export const useTodosStore = defineStore("todos", () => {
   // --- state ---
-  const todos = ref(load());
+  // 👉 On ne lit plus directement localStorage ici
+  const todos = ref(todosLocalRepository.load());
   const filter = ref("all");
 
   // --- helpers ---
@@ -65,10 +61,12 @@ export const useTodosStore = defineStore("todos", () => {
     }
   }
 
-  // --- persistance localStorage ---
+  // --- persistance via repository ---
   watch(
     todos,
-    (val) => localStorage.setItem(STORAGE_KEY, JSON.stringify(val)),
+    (val) => {
+      todosLocalRepository.save(val);
+    },
     { deep: true }
   );
 
