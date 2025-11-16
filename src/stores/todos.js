@@ -46,16 +46,21 @@ export const store = reactive({
   },
 });
 
-export const filteredTodos = computed(() => {
+const filteredTodos = computed(() => {
   if (store.filter === "active") return store.todos.filter((t) => !t.completed);
   if (store.filter === "completed")
     return store.todos.filter((t) => t.completed);
   return store.todos;
 });
 
-export const notCompletedCount = computed(() => {
+const notCompletedCount = computed(() => {
   return store.todos.filter((t) => !t.completed).length;
 });
+
+export const getters = {
+  filteredTodos: filteredTodos.value,
+  notCompletedCount: notCompletedCount.value,
+};
 
 watch(
   () => store.todos,
