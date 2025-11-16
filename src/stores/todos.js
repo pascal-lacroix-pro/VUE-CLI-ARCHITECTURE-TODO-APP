@@ -1,5 +1,5 @@
 // src/store/todos.js
-import { reactive, watch } from "vue";
+import { reactive, computed, watch } from "vue";
 
 const STORAGE_KEY = "todos";
 
@@ -15,17 +15,6 @@ export const store = reactive({
     return this.todos.find((t) => t.id === id);
   },
 
-  getFilteredTodos() {
-    if (store.filter === "active")
-      return this.todos.filter((t) => !t.completed);
-    if (this.filter === "completed")
-      return this.todos.filter((t) => t.completed);
-    return this.todos;
-  },
-
-  getNotCompletedCount() {
-    return this.todos.filter((t) => !t.completed).length;
-  },
   addOne(data) {
     this.todos.unshift({
       id: Date.now().toString(),
@@ -55,6 +44,17 @@ export const store = reactive({
   setFilter(data) {
     if (["all", "active", "completed"].includes(data)) this.filter = data;
   },
+});
+
+export const filteredTodos = computed(() => {
+  if (store.filter === "active") return store.todos.filter((t) => !t.completed);
+  if (store.filter === "completed")
+    return store.todos.filter((t) => t.completed);
+  return store.todos;
+});
+
+export const notCompletedCount = computed(() => {
+  return store.todos.filter((t) => !t.completed).length;
 });
 
 watch(

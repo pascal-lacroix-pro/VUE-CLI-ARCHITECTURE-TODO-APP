@@ -1,5 +1,5 @@
 <script setup>
-import { store } from "@/stores/todos";
+import { store, filteredTodos, notCompletedCount } from "@/stores/todos";
 import Todo from "./Todo.vue";
 import TodoInputForm from "./TodoForm.vue";
 import TodoListFooter from "./TodoListFooter.vue";
@@ -16,7 +16,7 @@ import TodoListFooter from "./TodoListFooter.vue";
     </div>
     <ul class="divide-y">
       <Todo
-        v-for="t in store.getFilteredTodos()"
+        v-for="t in filteredTodos"
         :key="t.id"
         :todo="t"
         @toggle="store.toggleOneById($event)"
@@ -25,7 +25,7 @@ import TodoListFooter from "./TodoListFooter.vue";
       />
     </ul>
     <todo-list-footer
-      :notCompletedCount="store.getNotCompletedCount()"
+      :notCompletedCount="notCompletedCount"
       @on-set-filter="store.setFilter($event)"
       @on-clear-completed="store.clearCompleted()"
     />
