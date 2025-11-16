@@ -1,88 +1,64 @@
-// src/stores/todos.js
-import { ref, computed, watch } from "vue";
-import { defineStore } from "pinia";
-import { todosLocalRepository } from "@/repositories/todosLocal";
+// src/store/todos.js
+import { reactive, computed, watch } from "vue";
+import { todosRepository } from "@/repositories/todosLocal";
 
-export const useTodosStore = defineStore("todos", () => {
-  // --- state ---
-  // 👉 On ne lit plus directement localStorage ici
-  const todos = ref(todosLocalRepository.load());
-  const filter = ref("all");
+export const store = reactive({
+  todos: todosRepository.load(),
+  filter: "all",
 
-  // --- helpers ---
-  function findOneById(id) {
-    return todos.value.find((t) => t.id === id);
-  }
+  findOneById(id) {
+    return this.todos.find((t) => t.id === id);
+  },
 
-  // --- getters (computed) ---
-  const filteredTodos = computed(() => {
-    if (filter.value === "active")
-      return todos.value.filter((t) => !t.completed);
-    if (filter.value === "completed")
-      return todos.value.filter((t) => t.completed);
-    return todos.value;
-  });
-
-  const notCompletedCount = computed(
-    () => todos.value.filter((t) => !t.completed).length
-  );
-
-  // --- actions ---
-  function addOne(data) {
-    todos.value.unshift({
+  addOne(data) {
+    this.todos.unshift({
       id: Date.now().toString(),
       content: String(data ?? "").trim(),
       completed: false,
     });
-  }
-
-  function toggleOneById(id) {
-    const todo = findOneById(id);
-    if (todo) todo.completed = !todo.completed;
-  }
-
-  function editOneById({ id, content }) {
-    const todo = findOneById(id);
-    if (todo) todo.content = String(content ?? "").trim();
-  }
-
-  function deleteOneById(id) {
-    const i = todos.value.findIndex((t) => t.id === id);
-    if (i !== -1) todos.value.splice(i, 1);
-  }
-
-  function clearCompleted() {
-    todos.value = todos.value.filter((t) => !t.completed);
-  }
-
-  function setFilter(value) {
-    if (["all", "active", "completed"].includes(value)) {
-      filter.value = value;
+  },
+  toggleOneById(id) {
+    const todo = this.findOneById(id);
+    if (todo) {
+      todo.completed = !todo.completed;
     }
-  }
-
-  // --- persistance via repository ---
-  watch(
-    todos,
-    (val) => {
-      todosLocalRepository.save(val);
-    },
-    { deep: true }
-  );
-
-  return {
-    // state
-    todos,
-    filter,
-    // getters
-    filteredTodos,
-    notCompletedCount,
-    // actions
-    addOne,
-    toggleOneById,
-    editOneById,
-    deleteOneById,
-    clearCompleted,
-    setFilter,
-  };
+  },
+  editOneById({ id, content }) {
+    const todo = this.findOneById(id);
+    if (todo) {
+      todo.content = String(content ?? "").trim();
+    }
+  },
+  deleteOneById(id) {
+    const i = this.todos.findIndex((t) => t.id === id);
+    if (i !== -1) this.todos.splice(i, 1);
+  },
+  clearCompleted() {
+    this.todos = this.todos.filter((t) => !t.completed);
+  },
+  setFilter(data) {
+    if (["all", "active", "completed"].includes(data)) this.filter = data;
+  },
 });
+
+export const filteredTodos = computed(() => {
+  if (store.filter === "active") return store.todos.filter((t) => !t.completed);
+  if (store.filter === "completed")
+    return store.todos.filter((t) => t.completed);
+  return store.todos;
+});
+
+export const notCompletedCount = computed(() => {
+  return store.todos.filter((t) => !t.completed).length;
+});
+
+export const getters = {
+  filteredTodos,
+  notCompletedCount,
+};
+
+watch(
+  () => store.todos,
+  (val) => todosRepository.save(val),
+  { deep: true }
+);
